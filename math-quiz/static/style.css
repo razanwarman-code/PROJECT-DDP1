@@ -174,3 +174,83 @@ input[type="text"]:disabled { background: #f3f4f6; }
   .card { padding: 20px; }
   .prompt { font-size: 1.3rem; }
 }
+
+/* ---------- Review jawaban ---------- */
+.review-title { margin: 32px 0 14px; font-size: 1.25rem; text-align: center; }
+.review-filter { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; }
+.pill {
+  font: inherit; font-weight: 700; padding: 9px 22px; border-radius: 99px; cursor: pointer;
+  border: 2px solid; display: inline-flex; align-items: center; gap: 8px;
+  transition: transform .1s, box-shadow .15s, background .15s, color .15s;
+}
+.pill:hover { transform: translateY(-1px); }
+.pill-n { font-size: .85rem; background: rgba(0,0,0,.08); border-radius: 99px; padding: 1px 9px; }
+.pill-correct { border-color: #16a34a; background: #dcfce7; color: #166534; }
+.pill-wrong   { border-color: #dc2626; background: #fee2e2; color: #991b1b; }
+.pill-correct.active { background: #16a34a; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.35); }
+.pill-wrong.active   { background: #dc2626; color: #fff; box-shadow: 0 4px 12px rgba(220,38,38,.35); }
+.pill.active .pill-n { background: rgba(255,255,255,.28); }
+
+.review-list { display: grid; gap: 12px; text-align: left; }
+.r-empty { text-align: center; color: var(--muted); margin: 18px 0; }
+.r-card {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 14px 16px;
+}
+.r-card.r-ok  { border-color: #bbf7d0; }
+.r-card.r-bad { border-color: #fecaca; }
+.r-num {
+  flex: none; min-width: 38px; height: 38px; border-radius: 99px; display: grid; place-items: center;
+  font-weight: 700; border: 2px solid var(--line); color: var(--muted); background: #fff;
+}
+.r-ok .r-num  { border-color: #16a34a; background: #dcfce7; color: #166534; }
+.r-bad .r-num { border-color: #dc2626; background: #fee2e2; color: #991b1b; }
+.r-body { flex: 1; min-width: 0; }
+.r-prompt { font-size: 1.3rem; font-weight: 700; line-height: 1.6; margin-bottom: 6px; }
+.r-ans { font-size: 1rem; margin: 3px 0; }
+.r-ans.ok  { color: #166534; }
+.r-ans.bad { color: #b91c1c; }
+.r-ico { display: inline-block; width: 1.3em; font-weight: 800; }
+.r-toggle {
+  margin-top: 10px; font: inherit; font-weight: 600; font-size: .92rem; color: var(--brand);
+  background: #fff; border: 2px solid var(--line); border-radius: 99px; padding: 6px 16px; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.r-toggle:hover, .r-toggle.open { border-color: var(--brand); background: #eef2ff; }
+.chev { display: inline-block; transition: transform .2s; margin-left: 4px; }
+.r-toggle.open .chev { transform: rotate(180deg); }
+.r-steps { margin-top: 10px; background: #f8fafc; border-radius: 12px; padding: 10px 14px; }
+.r-steps ol { margin: 0; padding-left: 22px; line-height: 1.7; }
+@media (max-width: 480px) { .r-card { padding: 12px; gap: 10px; } .r-prompt { font-size: 1.15rem; } }
+
+.pill-all { border-color: var(--brand); background: #eef2ff; color: var(--brand-dark); }
+.pill-all.active { background: var(--brand); color: #fff; box-shadow: 0 4px 12px rgba(79,70,229,.35); }
+
+/* ---------- Streak / combo ---------- */
+.streak {
+  position: fixed; top: 70px; right: 6vw; z-index: 10;
+  display: flex; flex-direction: column; align-items: center; pointer-events: none;
+}
+.streak-n {
+  display: grid; place-items: center; min-width: 120px; padding: 6px 24px 14px;
+  border-radius: 50%; border: 3px solid #ca8a04; background: #fef9c3;
+  font-size: 3.2rem; font-weight: 900; line-height: 1; color: #a16207;
+  box-shadow: 0 6px 16px rgba(0,0,0,.18);
+}
+.streak-t {
+  margin-top: -14px; font-size: 1.7rem; font-weight: 900; color: #fff;
+  -webkit-text-stroke: 5px #422006; paint-order: stroke fill;
+  text-shadow: 0 2px 0 #422006;
+}
+.streak.pulse { animation: streak-pulse .38s ease-out; }
+@keyframes streak-pulse {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+@media (max-width: 900px) {
+  .streak { top: 12px; right: 12px; }
+  .streak-n { min-width: 74px; padding: 4px 14px 9px; font-size: 1.9rem; }
+  .streak-t { font-size: 1.1rem; margin-top: -9px; -webkit-text-stroke-width: 4px; }
+}
+@media (prefers-reduced-motion: reduce) { .streak.pulse { animation: none; } }

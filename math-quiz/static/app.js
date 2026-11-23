@@ -3,7 +3,7 @@
 const $ = (id) => document.getElementById(id);
 const TOTAL = 10;
 
-const S = { topic: null, qs: [], i: 0, score: 0, locked: false, selected: null };
+const S = { topic: null, qs: [], i: 0, score: 0, locked: false, selected: null, log: [], filter: "all", streak: 0 };
 
 // ---------- util ----------
 function esc(str) {
@@ -59,6 +59,10 @@ async function startTopic(topic) {
     S.qs = data.questions;
     S.i = 0;
     S.score = 0;
+    S.log = [];
+    S.filter = "all";
+    S.streak = 0;
+    updateStreak(false);
     $("topic-title").textContent = topic.title;
     show("quiz");
     renderQuestion();
@@ -70,6 +74,24 @@ async function startTopic(topic) {
 function goMenu() {
   setTheme("");
   show("home");
+}
+
+// ---------- streak ----------
+// Tampil mulai ×2. Setiap bertambah: pulse kecil (skala naik lalu kembali normal).
+function updateStreak(grew) {
+  const el = $("streak");
+  if (!el) return;
+  if (S.streak < 2) {
+    el.classList.add("hidden");
+    return;
+  }
+  el.querySelector(".streak-n").textContent = `×${S.streak}`;
+  el.classList.remove("hidden");
+  if (grew) {
+    el.classList.remove("pulse");
+    void el.offsetWidth; // restart animasi
+    el.classList.add("pulse");
+  }
 }
 
 // ---------- soal ----------
@@ -168,6 +190,15 @@ async function check() {
   // Benar / salah -> kunci soal, ubah warna layar
   S.locked = true;
   if (res.correct) S.score++;
+  S.streak = res.correct ? S.streak + 1 : 0;
+  updateStreak(res.correct);
+  S.log.push({
+    prompt: q.prompt,
+    yourAnswer: q.type === "choice" ? rich(q.options[answer]) : esc(String(answer).trim()),
+    correctAnswer: rich(res.answer_text),
+    steps: res.steps || [],
+    correct: res.correct,
+  });
   setTheme(res.correct ? "correct" : "wrong");
 
   const steps = (res.steps || []).map((x) => `<li>${rich(x)}</li>`).join("");
@@ -216,7 +247,59 @@ function showResult() {
     : ratio >= 0.7 ? "Bagus sekali! Tinggal sedikit lagi."
     : ratio >= 0.4 ? "Lumayan. Coba lagi untuk meningkatkan skormu."
     : "Jangan menyerah. Baca pembahasannya dan coba lagi.";
+  S.filter = "all";
   show("result");
+  try { renderReview(); } catch (e) { console.error(e); }
+}
+
+// Review: semua soal beserta jawabanmu, jawaban benar, dan pembahasan
+function renderReview() {
+  const tabs = $("review-filter");
+  const list = $("review-list");
+  if (!tabs || !list) return; // index.html lama (cache): lewati review
+
+  const nOk = S.log.filter((x) => x.correct).length;
+  const nBad = S.log.length - nOk;
+  tabs.innerHTML = "";
+  [["all", "Semua", S.log.length], ["correct", "Benar", nOk], ["wrong", "Salah", nBad]].forEach(([key, label, n]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `pill pill-${key}` + (S.filter === key ? " active" : "");
+    b.innerHTML = `${label} <span class="pill-n">${n}</span>`;
+    b.onclick = () => { S.filter = key; renderReview(); };
+    tabs.appendChild(b);
+  });
+
+  list.innerHTML = "";
+  const items = S.log
+    .map((x, n) => ({ ...x, n }))
+    .filter((x) => S.filter === "all" || (S.filter === "correct") === x.correct);
+  if (!items.length) {
+    list.innerHTML = `<p class="r-empty">${S.filter === "wrong" ? "Tidak ada jawaban yang salah. Mantap! 🎉" : "Belum ada jawaban yang benar."}</p>`;
+    return;
+  }
+  for (const x of items) {
+    const el = document.createElement("article");
+    el.className = `r-card ${x.correct ? "r-ok" : "r-bad"}`;
+    const steps = x.steps.map((t) => `<li>${rich(t)}</li>`).join("");
+    el.innerHTML = `
+      <div class="r-num">${x.n + 1}</div>
+      <div class="r-body">
+        <div class="r-prompt">${rich(x.prompt)}</div>
+        <div class="r-ans ${x.correct ? "ok" : "bad"}"><span class="r-ico">${x.correct ? "✓" : "✗"}</span> Jawabanmu: <strong>${x.yourAnswer}</strong></div>
+        ${x.correct ? "" : `<div class="r-ans ok"><span class="r-ico">✓</span> Jawaban benar: <strong>${x.correctAnswer}</strong></div>`}
+        <button type="button" class="r-toggle" aria-expanded="false">Lihat pembahasan <span class="chev">▾</span></button>
+        <div class="r-steps hidden"><ol>${steps}</ol></div>
+      </div>`;
+    const btn = el.querySelector(".r-toggle");
+    const box = el.querySelector(".r-steps");
+    btn.onclick = () => {
+      const open = box.classList.toggle("hidden") === false;
+      btn.setAttribute("aria-expanded", open);
+      btn.classList.toggle("open", open);
+    };
+    list.appendChild(el);
+  }
 }
 
 // ---------- event ----------

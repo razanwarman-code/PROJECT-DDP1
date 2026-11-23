@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Latihan Matematika</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
   <main class="card">
@@ -24,6 +24,11 @@
         <span id="progress-text" class="progress-text"></span>
       </header>
       <div class="bar"><div id="bar-fill"></div></div>
+
+      <div id="streak" class="streak hidden" aria-live="polite">
+        <span class="streak-n">×2</span>
+        <span class="streak-t">Streak!</span>
+      </div>
 
       <div id="prompt" class="prompt"></div>
       <div id="answer-area" class="answer-area"></div>
@@ -45,9 +50,13 @@
         <button id="btn-retry" class="primary" type="button">Coba lagi (soal baru)</button>
         <button id="btn-menu" class="secondary" type="button">Pilih topik lain</button>
       </div>
+
+      <h2 class="review-title">Review jawabanmu</h2>
+      <div id="review-filter" class="review-filter"></div>
+      <div id="review-list" class="review-list"></div>
     </section>
 
   </main>
-  <script src="app.js"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>
