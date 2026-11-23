@@ -6,6 +6,7 @@ API:
     GET  /api/topics
     GET  /api/questions?topic=pecahan&count=10
     POST /api/check   {"id": "...", "answer": "1/2"}   (pilihan ganda: answer = nomor opsi)
+    POST /api/reveal  {"id": "..."}   waktu habis: kirim kunci jawaban, soal ditutup
 
 Kunci jawaban disimpan di server (memori), tidak pernah dikirim ke browser
 sebelum siswa menjawab.
@@ -72,14 +73,16 @@ class Handler(SimpleHTTPRequestHandler):
         return super().do_GET()  # file statis (index.html, style.css, app.js)
 
     def do_POST(self):
-        if urlparse(self.path).path != "/api/check":
+        path = urlparse(self.path).path
+        if path not in ("/api/check", "/api/reveal"):
             return self._json({"error": "Tidak ditemukan"}, 404)
         try:
             length = int(self.headers.get("Content-Length", 0))
             if not 0 < length <= 10_000:
                 raise ValueError
             payload = json.loads(self.rfile.read(length))
-            qid, answer = payload["id"], payload["answer"]
+            qid = payload["id"]
+            answer = None if path == "/api/reveal" else payload["answer"]
         except (ValueError, KeyError, TypeError):
             return self._json({"error": "Permintaan tidak valid"}, 400)
 
@@ -88,11 +91,25 @@ class Handler(SimpleHTTPRequestHandler):
         if q is None:
             return self._json({"error": "Soal sudah kedaluwarsa, muat ulang halaman."}, 404)
 
+        # Waktu habis: tampilkan kunci jawaban & tutup soal (tidak bisa dijawab lagi)
+        if path == "/api/reveal":
+            with LOCK:
+                q["closed"] = True
+            resp = {"answer_text": q["answer_text"], "steps": q["steps"]}
+            if q["type"] == "choice":
+                resp["correct_index"] = q["answer"]
+            return self._json(resp)
+
+        if q.get("closed"):
+            return self._json({"error": "Waktu untuk soal ini sudah habis."}, 409)
+
         status = generator.check_answer(q, answer)
         resp = {"status": status, "correct": status == "correct"}
         if status in ("correct", "wrong"):
             resp["answer_text"] = q["answer_text"]
             resp["steps"] = q["steps"]
+            if q["type"] == "choice":
+                resp["correct_index"] = q["answer"]  # supaya browser bisa menandai opsi yang benar
         return self._json(resp)
 
 

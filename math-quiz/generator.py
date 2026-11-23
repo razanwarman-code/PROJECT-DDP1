@@ -73,7 +73,7 @@ def _input_q(prompt, answer, answer_text, steps, meta, require_simplest=False,
 
 # ---------------------------------------------------------------- 1. bilangan bulat
 def _int_q(prompt, ans, steps, expr):
-    return _input_q(f"Hitunglah: {prompt}", Fraction(ans), s(ans), steps, {"expr": expr},
+    return _input_q(f"{prompt} = ?", Fraction(ans), s(ans), steps, {"expr": expr},
                     False, "Jawabanmu (contoh: -5)")
 
 
@@ -208,7 +208,7 @@ def _f_add_same(rng, level):
     ans = Fraction(a + b, d)
     steps = [f"Penyebut sama, jadi cukup jumlahkan pembilang: {a} + {b} = {a + b}.",
              f"Hasilnya {tok(a + b, d)}."] + _simp(a + b, d, ans)
-    return _input_q(f"Hitunglah: {tok(a, d)} + {tok(b, d)}", ans, fr_text(ans), steps,
+    return _input_q(f"{tok(a, d)} + {tok(b, d)} = ?", ans, fr_text(ans), steps,
                     {"expr": f"Fraction({a},{d}) + Fraction({b},{d})"}, True, "Contoh: 3/4")
 
 
@@ -231,13 +231,13 @@ def _addsub(rng, level, sign):
 
 def _f_add_diff(rng, level):
     a, b, ans, steps, expr = _addsub(rng, level, "+")
-    return _input_q(f"Hitunglah: {ft(a)} + {ft(b)}", ans, fr_text(ans), steps,
+    return _input_q(f"{ft(a)} + {ft(b)} = ?", ans, fr_text(ans), steps,
                     {"expr": expr}, True, "Contoh: 3/4")
 
 
 def _f_sub_diff(rng, level):
     a, b, ans, steps, expr = _addsub(rng, level, "−")
-    return _input_q(f"Hitunglah: {ft(a)} − {ft(b)}", ans, fr_text(ans), steps,
+    return _input_q(f"{ft(a)} − {ft(b)} = ?", ans, fr_text(ans), steps,
                     {"expr": expr}, True, "Contoh: 3/4")
 
 
@@ -247,7 +247,7 @@ def _f_mul(rng, level):
     ans = a * b
     steps = [f"Kalikan pembilang: {a.numerator} × {b.numerator} = {raw_n}.",
              f"Kalikan penyebut: {a.denominator} × {b.denominator} = {raw_d}."] + _simp(raw_n, raw_d, ans)
-    return _input_q(f"Hitunglah: {ft(a)} × {ft(b)}", ans, fr_text(ans), steps,
+    return _input_q(f"{ft(a)} × {ft(b)} = ?", ans, fr_text(ans), steps,
                     {"expr": f"Fraction({a.numerator},{a.denominator}) * Fraction({b.numerator},{b.denominator})"},
                     True, "Contoh: 3/4")
 
@@ -320,14 +320,14 @@ def q_linear(rng, level):
             c = x0 + b
             steps = [_move_const_step(b, c) + f"x = {s(c)} {'−' if b > 0 else '+'} {abs(b)} = {s(x0)}"]
             lhs, rhs = (1, b), (0, c)
-            prompt = f"Tentukan nilai x: {lin(1, b)} = {s(c)}"
+            prompt = f"{lin(1, b)} = {s(c)}, maka x = ?"
         else:  # ax = c
             a = rng.randint(2, 9)
             x0 = _nonzero(rng, -9, 9)
             c = a * x0
             steps = [f"Bagi kedua ruas dengan {a}: x = {s(c)} ÷ {a} = {s(x0)}"]
             lhs, rhs = (a, 0), (0, c)
-            prompt = f"Tentukan nilai x: {a}x = {s(c)}"
+            prompt = f"{a}x = {s(c)}, maka x = ?"
     elif level == 2:
         a = rng.randint(2, 9)
         x0 = _nonzero(rng, -8, 10)
@@ -336,7 +336,7 @@ def q_linear(rng, level):
         steps = [_move_const_step(b, c) + f"{a}x = {s(c - b)}",
                  f"Bagi kedua ruas dengan {a}: x = {s(c - b)} ÷ {a} = {s(x0)}"]
         lhs, rhs = (a, b), (0, c)
-        prompt = f"Tentukan nilai x: {lin(a, b)} = {s(c)}"
+        prompt = f"{lin(a, b)} = {s(c)}, maka x = ?"
     else:
         while True:
             a, c = _nonzero(rng, -9, 9), _nonzero(rng, -9, 9)
@@ -348,7 +348,7 @@ def q_linear(rng, level):
         steps = [f"Pindahkan suku x ke kiri dan konstanta ke kanan: {xterm(a - c)} = {s(d - b)}.",
                  f"Bagi kedua ruas dengan {s(a - c)}: x = {s(d - b)} ÷ {sp(a - c)} = {s(x0)}"]
         lhs, rhs = (a, b), (c, d)
-        prompt = f"Tentukan nilai x: {lin(a, b)} = {lin(c, d)}"
+        prompt = f"{lin(a, b)} = {lin(c, d)}, maka x = ?"
     return _input_q(prompt, Fraction(x0), f"x = {s(x0)}", steps,
                     {"kind": "linear", "lhs": lhs, "rhs": rhs}, False, "x = ?")
 
@@ -387,7 +387,7 @@ def q_inequality(rng, level):
                      f"tanda pertidaksamaan dibalik: x {ans_sym} {s(k)}")
     return {
         "type": "choice",
-        "prompt": f"Selesaikan pertidaksamaan: {lin(a, b)} {sym} {s(c)}",
+        "prompt": f"{lin(a, b)} {sym} {s(c)}",
         "options": options,
         "answer": options.index(correct),
         "answer_text": correct,
@@ -427,8 +427,56 @@ def list_topics():
     return [{"id": k, "title": v["title"], "desc": v["desc"]} for k, v in TOPICS.items()]
 
 
-def generate_set(topic, count=10, rng=None):
-    """Buat satu set soal. Kesulitan naik bertahap (level 1 -> 3), prompt tidak kembar."""
+def _opt_text(v, prefix=""):
+    """Fraction -> teks opsi (pecahan memakai token {n/d})."""
+    if v.denominator == 1:
+        return prefix + s(int(v))
+    return prefix + (MINUS if v < 0 else "") + tok(abs(v.numerator), v.denominator)
+
+
+def _distractors(ans, allow_neg, rng):
+    """3 jawaban salah yang masuk akal & berbeda dari kunci."""
+    if ans.denominator == 1:
+        n = int(ans)
+        cands = [n + 1, n - 1, n + 2, n - 2, n + 10, n - 10, 2 * n, -n if allow_neg else n + 3]
+        cands = [Fraction(c) for c in cands]
+    else:
+        p, d = ans.numerator, ans.denominator
+        cands = [Fraction(p + 1, d), Fraction(p - 1, d), Fraction(p, d + 1), Fraction(p + 1, d + 1),
+                 ans + 1, 1 / ans if ans else ans + 2]
+        if d > 1:
+            cands.append(Fraction(p, d - 1))
+    ok = []
+    for c in cands:
+        if c != ans and c not in ok and (allow_neg or c > 0):
+            ok.append(c)
+    k = 2
+    while len(ok) < 3:  # cadangan, hampir tidak pernah terpakai
+        c = ans + k
+        if c != ans and c not in ok:
+            ok.append(c)
+        k += 1
+    return rng.sample(ok, 3)
+
+
+def to_choice(q, rng):
+    """Ubah soal isian (jawaban angka) menjadi pilihan ganda 4 opsi."""
+    prefix = "x = " if q["answer_text"].startswith("x = ") else ""
+    ans = q["answer"]
+    allow_neg = "Fraction(" not in str(q["meta"].get("expr", ""))  # soal pecahan: jawaban tetap positif
+    options_v = [ans] + _distractors(ans, allow_neg, rng)
+    rng.shuffle(options_v)
+    q["options"] = [_opt_text(v, prefix) for v in options_v]
+    q["answer"] = options_v.index(ans)
+    q["type"] = "choice"
+    q["placeholder"] = None
+    return q
+
+
+def generate_set(topic, count=10, rng=None, choice_rate=0.3):
+    """Buat satu set soal. Kesulitan naik bertahap (level 1 -> 3), prompt tidak kembar.
+
+    choice_rate: peluang tiap soal isian diubah menjadi pilihan ganda."""
     rng = rng or random.Random()
     fn = TOPICS[topic]["fn"]
     out, seen = [], set()
@@ -439,6 +487,8 @@ def generate_set(topic, count=10, rng=None):
             if q["prompt"] not in seen:
                 break
         seen.add(q["prompt"])
+        if q["type"] == "input" and rng.random() < choice_rate:
+            q = to_choice(q, rng)
         out.append(q)
     return out
 

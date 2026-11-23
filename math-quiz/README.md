@@ -13,6 +13,8 @@ Frontend HTML/CSS/JS, backend Python (pustaka standar, tanpa install).
     generator.py    pembuat soal + pengecek jawaban (inti)
     server.py       server web + API
     static/         index.html, style.css, app.js
+    static/assets/  gambar pita & tombol layar hasil
+    static/fonts/   BryndanWriteBook.ttf (font tulisan tangan; cek lisensi sebelum dipakai publik)
     test_generator.py
 
 ## Menambah topik baru

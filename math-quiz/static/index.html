@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Latihan Matematika</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
   <main class="card">
@@ -25,6 +25,18 @@
       </header>
       <div class="bar"><div id="bar-fill"></div></div>
 
+      <div id="timer" class="timer" aria-label="Sisa waktu"><span id="timer-n">20</span></div>
+
+      <div id="streak" class="streak hidden" aria-live="polite">
+        <span class="streak-n">
+          <svg class="streak-star" viewBox="0 0 200 150" preserveAspectRatio="none" aria-hidden="true">
+            <polygon points="100.0,5.0 113.3,19.9 132.8,9.2 138.4,26.5 161.7,21.4 158.8,39.0 183.1,40.0 172.2,55.8 194.5,62.8 176.8,75.0 194.5,87.2 172.2,94.2 183.1,110.0 158.8,111.0 161.7,128.6 138.4,123.5 132.8,140.8 113.3,130.1 100.0,145.0 86.7,130.1 67.2,140.8 61.6,123.5 38.3,128.6 41.2,111.0 16.9,110.0 27.8,94.2 5.5,87.2 23.2,75.0 5.5,62.8 27.8,55.8 16.9,40.0 41.2,39.0 38.3,21.4 61.6,26.5 67.2,9.2 86.7,19.9"/>
+          </svg>
+          <span class="streak-num">×2</span>
+        </span>
+        <span class="streak-t">Streak!</span>
+      </div>
+
       <div id="prompt" class="prompt"></div>
       <div id="answer-area" class="answer-area"></div>
 
@@ -38,16 +50,38 @@
 
     <!-- Layar 3: hasil -->
     <section id="result" class="screen hidden">
-      <div id="result-emoji" class="result-emoji"></div>
-      <h1 id="result-score"></h1>
-      <p id="result-msg" class="sub"></p>
-      <div class="actions">
-        <button id="btn-retry" class="primary" type="button">Coba lagi (soal baru)</button>
-        <button id="btn-menu" class="secondary" type="button">Pilih topik lain</button>
+      <div class="paper-wrap">
+        <div class="paper">
+          <h1 class="paper-title">Hasilmu...</h1>
+
+          <div class="paper-row">
+            <div id="ring" class="ring" role="img" aria-label="Skor">
+              <div class="ring-hole"><span id="ring-pct">0%</span></div>
+            </div>
+            <div class="ribbons">
+              <div class="rb rb-ok"   style="--w:270"><img src="assets/benar.png" alt="" width="270" height="68"><span id="rb-ok">0 Benar</span></div>
+              <div class="rb rb-bad"  style="--w:254"><img src="assets/salah.png" alt="" width="254" height="72"><span id="rb-bad">0 Salah</span></div>
+              <div class="rb rb-skip" style="--w:360"><img src="assets/tidak_terjawab.png" alt="" width="360" height="62"><span id="rb-skip">0 Tidak Terjawab</span></div>
+            </div>
+          </div>
+
+          <div class="paper-actions">
+            <button id="btn-retry" class="img-btn tilt-a" type="button" style="--w:412"><img src="assets/coba_lagi.png" alt="Coba lagi" width="412" height="124"></button>
+            <button id="btn-menu" class="img-btn tilt-b" type="button" style="--w:415"><img src="assets/topik_lain.png" alt="Topik lain" width="415" height="130"></button>
+          </div>
+        </div>
       </div>
+
+      <!-- Review soal: kartu terpisah di bawah hasil -->
+      <section class="review-card">
+        <h2 class="review-title">Review jawabanmu</h2>
+        <div id="review-filter" class="review-filter"></div>
+        <div id="review-list" class="review-list"></div>
+      </section>
     </section>
 
   </main>
-  <script src="app.js"></script>
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

@@ -75,11 +75,41 @@ class GeneratorTests(unittest.TestCase):
     def test_semua_topik(self):
         for topic in g.TOPICS:
             for seed in range(300):
-                qs = g.generate_set(topic, 10, random.Random(seed))
+                qs = g.generate_set(topic, 10, random.Random(seed), choice_rate=0)
                 self.assertEqual(len(qs), 10)
                 self.assertEqual(len({q["prompt"] for q in qs}), 10, f"{topic}/seed{seed}: soal kembar")
                 for i, q in enumerate(qs):
                     self.verify(f"{topic}/seed{seed}/#{i}", q)
+
+    def test_konversi_pilihan_ganda(self):
+        """Semua soal isian yang diubah jadi pilihan ganda: 4 opsi berbeda, tepat 1 benar."""
+        n_choice = 0
+        for topic in g.TOPICS:
+            for seed in range(200):
+                qs = g.generate_set(topic, 10, random.Random(seed), choice_rate=1)
+                for i, q in enumerate(qs):
+                    tag = f"{topic}/seed{seed}/#{i}"
+                    n_choice += 1
+                    self.assertEqual(q["type"], "choice", tag)
+                    self.assertEqual(len(q["options"]), 4, tag)
+                    self.assertEqual(len(set(q["options"])), 4, f"{tag}: opsi kembar {q['options']}")
+                    # opsi benar = teks kunci (tanpa tambahan bentuk campuran "(= 1 {1/4})")
+                    self.assertEqual(q["options"][q["answer"]], q["answer_text"].split(" (")[0], tag)
+                    self.assertEqual(g.check_answer(q, q["answer"]), "correct", tag)
+                    for j in range(4):
+                        if j != q["answer"]:
+                            self.assertEqual(g.check_answer(q, j), "wrong", tag)
+                    view = g.public_view(q, "id")
+                    self.assertNotIn("answer", view)
+        self.assertGreater(n_choice, 1000)
+
+    def test_format_soal_tanpa_hitunglah(self):
+        for topic in g.TOPICS:
+            for q in g.generate_set(topic, 10, random.Random(3)):
+                self.assertNotIn("Hitunglah", q["prompt"])
+                self.assertNotIn("Tentukan nilai", q["prompt"])
+        q = g.generate_set("bilangan-bulat", 1, random.Random(1), choice_rate=0)[0]
+        self.assertTrue(q["prompt"].endswith(" = ?"), q["prompt"])
 
     def test_seed_sama_hasil_sama(self):
         for topic in g.TOPICS:
